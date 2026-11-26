@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/35442310/README.md)
+[README.md](https://github.com/user-attachments/files/35443848/README.md)
 # Windows 11 보안 점검·강화 도구
 
 PySide6 기반 GUI. 취약한 Windows 11 보안 설정을 점검하고,
@@ -10,7 +10,7 @@ PySide6 기반 GUI. 취약한 Windows 11 보안 설정을 점검하고,
 |---|---|
 | `win11_security_toolkit.py` | PySide6 UI (진입점) |
 | `seccore.py` | 점검/적용/복원 로직 및 항목 정의 |
-| `version_info.txt` | exe 속성 정보 (파일/제품 버전 1.00, 저작권 K.S Ju) |
+| `version_info.txt` | exe 속성 정보 (파일/제품 버전 1.0.0.1, 저작권 K.S Ju) |
 | `build.bat` | PyInstaller 단일 exe 빌드 (`--onefile --windowed --uac-admin`) |
 
 ## 실행 / 빌드
@@ -59,6 +59,9 @@ PowerShell 기반은 `check_fn / apply_fn / restore_fn` 을 지정하고, 수동
 - 프로그램은 파일을 자동 설치하지 않고 **브라우저로 다운로드만** 엽니다.
 - 오프라인, 저장소/릴리스 없음(404), API 요청 한도 초과(IP당 시간당 60회), 태그 형식 오류 등은 사유를 안내하고 릴리스 페이지 열기를 제안합니다.
 - 비공개 저장소는 인증이 필요해 지원하지 않습니다.
+
+## 보고서
+'보고서 저장'(.md/.txt)에는 점검 결과 표 외에 **점검 대상 PC 정보**가 맨 위에 들어갑니다: 컴퓨터 이름, 도메인/워크그룹, 계정, 계정 SID, 관리자 실행 여부, OS/버전, 활성 어댑터별 MAC·IPv4·IPv6·기본 게이트웨이·DNS 서버, 프로그램 버전. 계정·IP 등 식별 정보가 포함되므로 외부 공유 시 주의하세요. (프로그램을 실행한 계정 기준이며, 다른 관리자 계정으로 승격 실행하면 그 계정으로 표시됩니다)
 
 ## 시작 시 점검 화면
 - 프로그램 시작(및 '다시 검사') 시 상단 녹색 Bar에 `전체 보안 상태 점검 중! - 잠시 기다려주세요!` 메시지가 점멸하고 Bar가 진행률만큼 채워집니다.
