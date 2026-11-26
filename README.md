@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/35463410/README.md)
+[README.md](https://github.com/user-attachments/files/35484876/README.md)
 # Windows 11 보안 점검·강화 도구
 
 PySide6 기반 GUI. 취약한 Windows 11 보안 설정을 점검하고,
@@ -9,20 +9,28 @@ PySide6 기반 GUI. 취약한 Windows 11 보안 설정을 점검하고,
 | 파일 | 설명 |
 |---|---|
 | `win11_security_toolkit.py` | 프로그램 동작 로직 (진입점) – 화면은 `ui/*.ui` 를 불러와 사용 |
-| `ui/main_window.ui` | 메인 창 (헤더/보안 점수 Bar, 툴바, 탭, 로그) + 전체 스타일시트(QSS) |
+| `ui/main_window.ui` | 메인 창 (헤더/보안 점수 Bar, 툴바, 필터 안내, 탭, 로그) + 전체 스타일시트(QSS) |
 | `ui/item_card.ui` | 항목 카드 1개 (제목/위험도 배지/설명/상태/스위치/가이드 버튼) |
 | `ui/guide_dialog.ui` | 수동 가이드 창 |
-| `ui_loader.py` | `.ui` 파일 로더 (위젯 objectName → `self.<objectName>` 속성) |
+| `ui_loader.py` | `.ui` 파일 로더 (위젯 objectName → `self.<objectName>`, 이름 충돌 검사) |
 | `toggle_switch.py` | On/Off 토글 스위치 위젯 (`.ui` 에서 승격 위젯으로 사용) |
-| `seccore.py` | 점검/적용/복원 로직 및 항목 정의 |
-| `version_info.txt` | exe 속성 정보 (파일/제품 버전 1.0.0.2, 저작권 K.S Ju) |
-| `build.bat` | PyInstaller 단일 exe 빌드 (`--onefile --windowed --uac-admin`, `ui` 폴더 포함) |
+| `report_builder.py` | 보고서 생성 (HTML/CSS, Markdown/텍스트) – GUI 와 분리 |
+| `seccore.py` | 공통 유틸, 레지스트리(Reg), 백업 저장소(Store), 항목 모델(Item) |
+| `handlers.py` | PowerShell/서비스/감사 등 레지스트리 외 항목의 점검·적용·복원 |
+| `items_auto.py` | On/Off 자동 항목 정의 |
+| `items_guides.py` | 수동 가이드 항목 정의 |
+| `sysinfo.py` | 점검 대상 PC 정보 수집 (보고서용) |
+| `catalog.py` | 자동 항목 + 가이드를 합친 전체 목록 |
+| `version_info.txt` | exe 속성 정보 (파일/제품 버전 2.0.0.0, 저작권 K.S Ju) |
+| `Win11SecToolkit.spec` | **빌드 설정(단일 기준)** – `--onefile --windowed --uac-admin`, `ui`·`app.ico` 포함 |
+| `build.bat` | 위 `.spec` 으로 PyInstaller 빌드 (`build.bat nopip` = pip 설치 생략) |
 
 ## 실행 / 빌드
 ```bat
 pip install -r requirements.txt
 python win11_security_toolkit.py     :: 개발 중 실행
 build.bat                            :: dist\Win11SecToolkit.exe 생성
+build.bat nopip                      :: pip 설치/업그레이드 생략 (오프라인·이미 준비된 환경)
 ```
 
 ## 개인 정보 보호 항목 (v1.1)
@@ -50,7 +58,7 @@ pyside6-designer ui\main_window.ui     :: 또는 item_card.ui / guide_dialog.ui
 - 코드에서 정하는 값: 항목 수만큼의 카드, 분류 목록, 탭 제목의 개수, 업데이트 버튼의 버전 문구, 데모/읽기 전용 안내 배너 문구.
 - `item_card.ui` 의 `ToggleSwitch` 는 승격 위젯입니다. Designer 에서는 일반 버튼으로 보이는 것이 정상입니다.
 
-## 항목 추가 방법 (`seccore.py`)
+## 항목 추가 방법 (`items_auto.py` / `items_guides.py`)
 레지스트리 항목은 `Item(...)` 에 `regs=[R(키, 값이름, 보안값, off=복원기본값)]` 만 추가하면 됩니다.
 PowerShell 기반은 `check_fn / apply_fn / restore_fn` 을 지정하고, 수동 항목은 `guide=Guide(...)` 를 지정하세요.
 
@@ -85,3 +93,10 @@ PowerShell 기반은 `check_fn / apply_fn / restore_fn` 을 지정하고, 수동
 ## 시작 시 점검 화면
 - 프로그램 시작(및 '다시 검사') 시 상단 녹색 Bar에 `전체 보안 상태 점검 중! - 잠시 기다려주세요!` 메시지가 점멸하고 Bar가 진행률만큼 채워집니다.
 - 점검이 끝나 Bar가 100%로 표시될 때까지 창 안의 모든 버튼·검색/필터 컨트롤·항목 스위치·가이드 버튼이 비활성화됩니다. 완료 후 Bar는 최종 보안 점수로 바뀝니다.
+
+## 2.0 변경 요약
+- **원복 신뢰도**: SMBv1·Guest 는 원래 상태를 기억해 원래 꺼져 있던 것은 켜지 않습니다. 서비스 중지/시작·감사 정책은 실패하면 항목 실패로 표시하고, 원래 중지/감사 상태를 기억합니다. ASR 은 규칙별 원래 동작(감사/경고/해제)까지 복원합니다.
+- **백업**: 이미 양호한 항목도 최초 원본을 백업하고(이미 백업이 있으면 최초 원본 유지) 원래 양호했던 항목은 Off 시 기존처럼 기본 해제 값으로 되돌리거나 값을 삭제해 보호를 해제하며, `backup.json` 은 임시 파일 → `os.replace` 로 원자적으로 저장합니다. 손상된 파일은 `.corrupt` 로 보관합니다.
+- **점검 정확도**: 최신 패치 판정에 Windows Update 설치 기록·마지막 설치 시각을 함께 사용합니다. 허용 기준이 있는 항목은 툴팁에 '양호 판정 기준'이 표시됩니다.
+- **종료 안정성**: 작업/업데이트 스레드가 끝날 때까지 안전하게 기다린 뒤 닫고(한 번 더 닫으면 강제 종료), 완료 타이머도 정리합니다.
+- **UX**: 필터 결과가 현재 탭에 없으면 안내와 '다른 탭으로 이동' 버튼, 점수 산정 기준 툴팁, 일괄 적용 확인창(재부팅 표시·복원 지점 권고), 업데이트 창에 다운로드 파일·SHA-256 안내.
