@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/35444825/README.md)
+[README.md](https://github.com/user-attachments/files/35463410/README.md)
 # Windows 11 보안 점검·강화 도구
 
 PySide6 기반 GUI. 취약한 Windows 11 보안 설정을 점검하고,
@@ -8,10 +8,15 @@ PySide6 기반 GUI. 취약한 Windows 11 보안 설정을 점검하고,
 ## 파일 구성
 | 파일 | 설명 |
 |---|---|
-| `win11_security_toolkit.py` | PySide6 UI (진입점) |
+| `win11_security_toolkit.py` | 프로그램 동작 로직 (진입점) – 화면은 `ui/*.ui` 를 불러와 사용 |
+| `ui/main_window.ui` | 메인 창 (헤더/보안 점수 Bar, 툴바, 탭, 로그) + 전체 스타일시트(QSS) |
+| `ui/item_card.ui` | 항목 카드 1개 (제목/위험도 배지/설명/상태/스위치/가이드 버튼) |
+| `ui/guide_dialog.ui` | 수동 가이드 창 |
+| `ui_loader.py` | `.ui` 파일 로더 (위젯 objectName → `self.<objectName>` 속성) |
+| `toggle_switch.py` | On/Off 토글 스위치 위젯 (`.ui` 에서 승격 위젯으로 사용) |
 | `seccore.py` | 점검/적용/복원 로직 및 항목 정의 |
-| `version_info.txt` | exe 속성 정보 (파일/제품 버전 1.0.0.1, 저작권 K.S Ju) |
-| `build.bat` | PyInstaller 단일 exe 빌드 (`--onefile --windowed --uac-admin`) |
+| `version_info.txt` | exe 속성 정보 (파일/제품 버전 1.0.0.2, 저작권 K.S Ju) |
+| `build.bat` | PyInstaller 단일 exe 빌드 (`--onefile --windowed --uac-admin`, `ui` 폴더 포함) |
 
 ## 실행 / 빌드
 ```bat
@@ -34,6 +39,16 @@ build.bat                            :: dist\Win11SecToolkit.exe 생성
 - 호환성 영향이 있는 항목은 적용 전 경고창이 뜨고, "안전한 항목 일괄 적용"에서는 제외됩니다.
 - 변경 전 "복원 지점" 버튼으로 시스템 복원 지점을 만들 수 있습니다.
 - Windows가 아닌 환경에서는 UI 확인용 데모 모드로 실행됩니다.
+
+## 화면(GUI) 수정 – Qt Designer
+```bat
+pyside6-designer ui\main_window.ui     :: 또는 item_card.ui / guide_dialog.ui
+```
+- 저장 후 `python win11_security_toolkit.py` 로 바로 확인할 수 있습니다. (빌드 단계 추가 없음, 실행 시 `.ui` 를 읽음)
+- 코드가 참조하는 위젯 이름(objectName)은 **바꾸지 마세요.** (예: `bar`, `summary`, `search`, `btn_scan`, `tabs`, `sw`, `state_lbl` …) 위치·크기·문구·색은 자유롭게 바꿀 수 있습니다.
+- 파란 강조 버튼은 동적 속성 `primary = true` 로 지정됩니다. (스타일시트 `QPushButton[primary="true"]`)
+- 코드에서 정하는 값: 항목 수만큼의 카드, 분류 목록, 탭 제목의 개수, 업데이트 버튼의 버전 문구, 데모/읽기 전용 안내 배너 문구.
+- `item_card.ui` 의 `ToggleSwitch` 는 승격 위젯입니다. Designer 에서는 일반 버튼으로 보이는 것이 정상입니다.
 
 ## 항목 추가 방법 (`seccore.py`)
 레지스트리 항목은 `Item(...)` 에 `regs=[R(키, 값이름, 보안값, off=복원기본값)]` 만 추가하면 됩니다.
