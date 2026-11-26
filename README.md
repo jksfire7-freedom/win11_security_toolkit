@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/35416918/README.md)
+[README.md](https://github.com/user-attachments/files/35442310/README.md)
 # Windows 11 보안 점검·강화 도구
 
 PySide6 기반 GUI. 취약한 Windows 11 보안 설정을 점검하고,
@@ -39,17 +39,26 @@ build.bat                            :: dist\Win11SecToolkit.exe 생성
 레지스트리 항목은 `Item(...)` 에 `regs=[R(키, 값이름, 보안값, off=복원기본값)]` 만 추가하면 됩니다.
 PowerShell 기반은 `check_fn / apply_fn / restore_fn` 을 지정하고, 수동 항목은 `guide=Guide(...)` 를 지정하세요.
 
-## 버전 / 업데이트
-- 버전 변경 시 `win11_security_toolkit.py`의 `APP_VERSION`, `version_info.txt`(filevers/prodvers/FileVersion/ProductVersion)를 함께 수정하세요.
-- 상단 **업데이트** 버튼은 서버의 JSON 파일(`REMOTE_CONFIG_URL`, 현재 `https://naver.me/56Xxzjkl`)을 내려받아 `download_url` 값을 기본 브라우저로 엽니다. (조회는 백그라운드로 처리되어 창이 멈추지 않으며, 타임아웃 8초)
-  ```json
-  { "download_url": "https://새-다운로드-주소" }
-  ```
-  - 이 주소는 **JSON 파일을 직접 내려받는 주소**여야 합니다. 로그인/미리보기 같은 웹 페이지가 열리는 링크는 읽을 수 없습니다. (리다이렉트는 따라갑니다)
-  - 서버 조회에 실패하면(오프라인, JSON 아님, 값 오류 등) 사유를 보여 주고, 확인 후 **폴백 링크**를 엽니다. 폴백 순서: exe 옆 `update.json`의 `download_url` → 코드의 `DEFAULT_UPDATE_URL`
-  - `download_url` 은 `http(s)://` 주소만 허용됩니다.
-  - JSON 주소 자체를 바꾸려면 `REMOTE_CONFIG_URL` 을 수정하고 다시 빌드하세요. (다운로드 링크는 서버 JSON만 고치면 재빌드 불필요)
-  - `build.bat` 은 빌드 후 폴백용 `update.json` 을 `dist\` 폴더로 복사합니다.
+## 버전 / 업데이트 (GitHub Releases API)
+상단 **업데이트** 버튼은 GitHub API(`GET https://api.github.com/repos/{소유자}/{저장소}/releases/latest`)로 최신 릴리스를 조회합니다. 조회는 백그라운드로 처리되어 창이 멈추지 않습니다. (타임아웃 8초, 인증 불필요)
+
+**최초 설정 (1회)**
+1. `win11_security_toolkit.py` 의 `GITHUB_REPO = "OWNER/REPO"` 를 본인 **공개** 저장소(`소유자/저장소`)로 수정하고 빌드합니다.
+2. 필요하면 `RELEASE_ASSET_NAME` 을 릴리스에 올릴 exe 이름과 맞춥니다. (기본 `Win11SecToolkit.exe`)
+
+**새 버전 배포 순서**
+1. `APP_VERSION` 과 `version_info.txt` 의 버전 값을 올리고 빌드합니다.
+2. GitHub 저장소 → Releases → *Draft a new release* 에서 태그를 `v1.01` 형식으로 만들고, `dist\Win11SecToolkit.exe` 를 첨부해 **Publish** 합니다. (릴리스 본문은 '변경 사항'으로 표시됩니다)
+3. 이후 사용자가 업데이트 버튼을 누르면:
+   - 최신 태그가 현재 버전보다 높으면 → 새 버전 안내(변경 사항 포함) + **다운로드**/릴리스 페이지/나중에
+   - 같거나 낮으면 → "현재 최신 버전을 사용 중입니다"
+   - 릴리스에 exe 첨부가 없으면 → 릴리스 페이지를 엽니다
+
+**안전·예외 처리**
+- API 응답의 링크는 `https` 이면서 `github.com` / `githubusercontent.com` 도메인일 때만 사용합니다. (아니면 릴리스 페이지로 대체)
+- 프로그램은 파일을 자동 설치하지 않고 **브라우저로 다운로드만** 엽니다.
+- 오프라인, 저장소/릴리스 없음(404), API 요청 한도 초과(IP당 시간당 60회), 태그 형식 오류 등은 사유를 안내하고 릴리스 페이지 열기를 제안합니다.
+- 비공개 저장소는 인증이 필요해 지원하지 않습니다.
 
 ## 시작 시 점검 화면
 - 프로그램 시작(및 '다시 검사') 시 상단 녹색 Bar에 `전체 보안 상태 점검 중! - 잠시 기다려주세요!` 메시지가 점멸하고 Bar가 진행률만큼 채워집니다.
